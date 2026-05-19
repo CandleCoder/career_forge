@@ -1,0 +1,148 @@
+// =============================================================================
+// CareerForge — Prisma Schema
+// Database: Neon PostgreSQL (free tier)
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// User — Single user model with JWT auth
+// =============================================================================
+model User {
+  id              String            @id @default(cuid())
+  email           String            @unique
+  password        String            // bcrypt hashed
+  name            String
+  image           String?
+  linkedinUrl     String?
+  preferences     Json?             // job search preferences, target roles, etc.
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  resumes         Resume[]
+  jobSearches     JobSearch[]
+  outreachLogs    EmailOutreach[]
+  linkedinProfile LinkedInProfile?
+}
+
+// =============================================================================
+// Resume — Structured resume data with template/region support
+// =============================================================================
+model Resume {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  personalInfo   Json     // { name, email, phone, location, website, linkedin, github }
+  summary        String?  @db.Text
+  experience     Json     // [{ company, title, location, startDate, endDate, current, bullets[] }]
+  education      Json     // [{ school, degree, field, startDate, endDate, gpa, honors }]
+  skills         Json     // [{ category, items[] }]
+  certifications Json?    // [{ name, issuer, date, url }]
+  projects       Json?    // [{ name, description, url, technologies[] }]
+  template       String   @default("modern")  // modern, classic, creative, minimal
+  region         String   @default("US")       // US, UK, EU, APAC
+  isPublic       Boolean  @default(false)
+  publicSlug     String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([publicSlug])
+}
+
+// =============================================================================
+// JobSearch — Saved search configurations
+// =============================================================================
+model JobSearch {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query     String
+  location  String?
+  jobType   String?   // freelance, consultancy, onsite, remote
+  filters   Json?     // { salary_min, salary_max, experience_level, etc. }
+  isActive  Boolean   @default(true)
+  lastRun   DateTime?
+  jobs      Job[]
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// =============================================================================
+// Job — Individual job listings found by scraper
+// =============================================================================
+model Job {
+  id          String          @id @default(cuid())
+  searchId    String
+  search      JobSearch       @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  title       String
+  company     String
+  location    String?
+  jobType     String?         // freelance, consultancy, onsite, remote
+  source      String          // jsearch, adzuna, arbeitnow, etc.
+  url         String
+  description String          @db.Text
+  salary      String?
+  matchScore  Float?          // AI-computed match score 0-100
+  status      String          @default("new") // new, saved, applied, interviewing, rejected, offered
+  appliedAt   DateTime?
+  foundAt     DateTime        @default(now())
+
+  outreach    EmailOutreach[]
+
+  @@index([searchId])
+  @@index([status])
+}
+
+// =============================================================================
+// EmailOutreach — Tracking all sent emails/applications
+// =============================================================================
+model EmailOutreach {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId           String?
+  job             Job?      @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  recipientEmail  String
+  recipientName   String?
+  company         String?
+  subject         String
+  body            String    @db.Text
+  resumeAttached  Boolean   @default(true)
+  status          String    @default("pending") // pending, sent, delivered, opened, replied, bounced
+  sentAt          DateTime?
+  openedAt        DateTime?
+  repliedAt       DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([status])
+}
+
+// =============================================================================
+// LinkedInProfile — AI-optimized LinkedIn content
+// =============================================================================
+model LinkedInProfile {
+  id                     String    @id @default(cuid())
+  userId                 String    @unique
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentHeadline        String?
+  optimizedHeadline      String?
+  currentAbout           String?   @db.Text
+  optimizedAbout         String?   @db.Text
+  experienceEnhancements Json?     // [{ original, enhanced }]
+  skillRecommendations   Json?     // [{ skill, reason, priority }]
+  keywordSuggestions     Json?     // [{ keyword, relevance, usage }]
+  completenessScore      Float?    // 0-100
+  generatedAt            DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+}

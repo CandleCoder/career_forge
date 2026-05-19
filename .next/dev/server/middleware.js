@@ -1,0 +1,10 @@
+var R=require("./chunks/[turbopack]_runtime.js")("server/middleware.js")
+R.c("server/chunks/_1106y65._.js")
+R.c("server/chunks/0z~i_next_0yd8bdg._.js")
+R.c("server/chunks/0efa_@auth_core_02q3yp8._.js")
+R.c("server/chunks/12gq_jose_dist_webapi_0-ga00~._.js")
+R.c("server/chunks/0rgj_zod_v4_0t6j9nu._.js")
+R.c("server/chunks/node_modules__pnpm_0-_5abv._.js")
+R.c("server/chunks/[root-of-the-server]__0o42gzh._.js")
+R.m("[project]/node_modules/.pnpm/next@16.2.6_@babel+core@7.29.0_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/next/dist/esm/build/templates/middleware.js { INNER_MIDDLEWARE_MODULE => \"[project]/src/proxy.ts [middleware] (ecmascript)\" } [middleware] (ecmascript)")
+module.exports=R.m("[project]/node_modules/.pnpm/next@16.2.6_@babel+core@7.29.0_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/next/dist/esm/build/templates/middleware.js { INNER_MIDDLEWARE_MODULE => \"[project]/src/proxy.ts [middleware] (ecmascript)\" } [middleware] (ecmascript)").exports
