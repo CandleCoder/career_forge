@@ -23,7 +23,7 @@ export type RegisterState = {
 
 export async function registerUser(
   _prevState: RegisterState,
-  formData: FormData
+  formData: FormData,
 ): Promise<RegisterState> {
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
@@ -36,6 +36,12 @@ export async function registerUser(
   }
 
   const { name, email, password } = parsed.data;
+
+  // Prevent signups if there is already 1 user in the database
+  const userCount = await prisma.user.count();
+  if (userCount >= 1) {
+    return { error: "Registration is currently closed." };
+  }
 
   // Check if user already exists
   const existing = await prisma.user.findUnique({ where: { email } });

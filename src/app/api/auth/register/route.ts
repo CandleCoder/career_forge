@@ -13,8 +13,24 @@ const registerSchema = z.object({
   password: z.string().min(6),
 });
 
+export async function GET() {
+  try {
+    const userCount = await prisma.user.count();
+    return NextResponse.json({ registrationOpen: userCount < 1 });
+  } catch (error) {
+    console.error("Error checking registration status:", error);
+    return NextResponse.json({ registrationOpen: false }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   try {
+    // Prevent signups if there is already 1 user in the database
+    const userCount = await prisma.user.count();
+    if (userCount >= 1) {
+      return NextResponse.json({ error: "Registration is currently closed." }, { status: 403 });
+    }
+
     const body = await request.json();
     const parsed = registerSchema.safeParse(body);
 
@@ -42,15 +58,9 @@ export async function POST(request: Request) {
       data: { name, email, password: hashedPassword },
     });
 
-    return NextResponse.json(
-      { id: user.id, email: user.email, name: user.name },
-      { status: 201 },
-    );
+    return NextResponse.json({ id: user.id, email: user.email, name: user.name }, { status: 201 });
   } catch (error) {
     console.error("Registration error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
